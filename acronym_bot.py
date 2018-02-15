@@ -16,7 +16,7 @@ def process_arguments(arglist):
     help='accepts a string and automatically uses the first letter of each word to create an ACRONYM.')
     
     # Look up an acronym
-    command.add_argument('-d', '--def', nargs=1,
+    command.add_argument('-d', '--define', nargs=1,
     help='accepts a string and returns all entries where the ACRONYM matches')
     
     # Look up an acronym
@@ -34,14 +34,84 @@ def process_arguments(arglist):
 
     return args
 
-def acronym(args):
+def acronym_is_acceptable(acronym):
+    return acronym.isalnum()
+
+def definition_is_acceptable(definition_words):
+    joined_definition_words = ''.join(definition_words)
+    return all([
+        len(definition_words) > 1,
+        # Allow some common punctuation that isn't just trying to break everything
+        joined_definition_words.replace(' ','').replace(',','',3).replace(';','',3).replace(':','',3).replace("'",'').isalnum()
+    ])
+
+
+def add_acronym(acronym_dict, definition_words, manual_acronym=None):
+    
+    acronym=''
+    if definition_is_acceptable(definition_words):
+        
+        if manual_acronym:
+            if acronym_is_acceptable(manual_acronym):
+                acronym = manual_acronym
+        else:
+            # assemble first letters
+            for word in definition_words:
+                acronym += word[0]
+            acronym = acronym.upper() #convert to all caps
+        
+        # join and capitalize each word of the acronym
+        definition = ' '.join(definition_words).title()
+
+        acronym_dict.setdefault(acronym, []) # Add acronym to the dictionary if it isn't already
+        acronym_dict[acronym].append(definition) # Add definition to the acronym's entry
+
+        print(acronym_dict)
+
+        # response += 'Added entry:\n' + bold(acronym) + ': ' + cmdarg
+        # responsetype='in_channel'
+    else:
+        print("Invalid acronym") # Gotta send this back to slack somehow
+
+def define_acronym(acronym):
+    pass
+
+def find_acronym(query):
+    pass
+
+def process_acronym(args):
     # Load file information from config
     acronym_list_file_name = config.storage_file
-    with open(acronym_list_file_name,'r+b') as acronym_list_file:
-        acronym_list_json = json.load(acronym_list_file)
+    
+    acronym_list_json = {} # set to empty in case file doesn't exist
+    try:
+        with open(acronym_list_file_name,'r') as acronym_list_file:
+            acronym_list_json = json.load(acronym_list_file)
+    except IOError:
+        print("File does not exist, so a new one will be created.")
+    except ValueError:
+        print("File is broken, so a new one will be created.")
 
-    arguments = request.form['text'].split(':',1)
+    # If arguments exist, that's our command
+    if args.add:
+        add_acronym(acronym_list_json, args.add, manual_acronym=args.manual)
+    
+    elif args.define:
+        define_acronym(acronym_list_json, args.define)
+    
+    elif args.find:
+        find_acronym(acronym_list_json, args.find)
+        
+    with open(acronym_list_file_name,'w') as acronym_list_file:
+        json.dump(acronym_list_json, acronym_list_file)
 
+    #############################################################
+    #### OLD CODE
+    #### BELOW THIS
+    #### POINT
+    #############################################################
+
+def old_DO_NOT_USE():
     if len(arguments) >= 2:
         command = arguments[0].strip(' ').lower()
         cmdarg = arguments[1].strip(' ')
@@ -163,4 +233,4 @@ def acronym(args):
 
 if  __name__ == "__main__": # used for testing pretty much
     args = process_arguments(sys.argv[1:])
-    acronym(args)
+    process_acronym(args)
