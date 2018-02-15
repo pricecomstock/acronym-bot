@@ -1,0 +1,1 @@
+storage_file = '/home/pricecomstock/slash-selfie/acronyms/acronym_list.json'
