@@ -1,10 +1,10 @@
 import argparse
 import json
 import acronym_config as config
+import sys
 
-def process_arguments(argstring)
-    # Tokenize
-    arglist = argstring.split()
+
+def process_arguments(arglist):
 
     parser = argparse.ArgumentParser(description="Add or list acronyms!")
 
@@ -12,7 +12,7 @@ def process_arguments(argstring)
     command = parser.add_mutually_exclusive_group(required=True)
 
     # Add an acronym
-    command.add_argument('-a', '--add', nargs='+'
+    command.add_argument('-a', '--add', nargs='+',
     help='accepts a string and automatically uses the first letter of each word to create an ACRONYM.')
     
     # Look up an acronym
@@ -23,6 +23,8 @@ def process_arguments(argstring)
     command.add_argument('-f', '--find', nargs='+',
     help='accepts a string and returns all entries where either the ACRONYM or the DEFINITION match')
 
+
+    # NOT Mutually exclusive, but will be ignored if we aren't using --add
     # We can also manually define the letters for the acronym
     parser.add_argument('-m', '--manual', nargs=1,
     help='use with --add. accepts a string with no spaces after this to manually designate an ACRONYM')
@@ -30,9 +32,9 @@ def process_arguments(argstring)
     # Parse it
     args = parser.parse_args(arglist)
 
-    # TODO: Either return args or pass to main method
+    return args
 
-def acronym():
+def acronym(args):
     # Load file information from config
     acronym_list_file_name = config.storage_file
     with open(acronym_list_file_name,'r+b') as acronym_list_file:
@@ -159,17 +161,6 @@ def acronym():
     return jsonify({'response_type':responsetype,'text':response})
     # return jsonify({'response_type':responsetype,'text':response,'thread_ts':request.form['ts']})
 
-@app.route('/ab_list', methods=['GET'])
-def ab_list():
-    return send_file('/home/pricecomstock/slash-selfie/acronyms/acronym_list.html')
-
-@app.route('/ab_json', methods=['GET'])
-@crossdomain(origin='*')
-def ab_json():
-    response = make_response(send_file('/home/pricecomstock/slash-selfie/acronyms/acronym_list.json', mimetype='application/json'))
-    # response.headers['Access-Control-Allow-Origin'] = '*'
-    # response.headers['Access-Control-Allow-Methods'] = 'GET,POST'
-    # response.headers['Access-Control-Max-Age'] = '1000'
-    # response.headers['Access-Control-Allow-Headers'] = '*'
-
-    return response
+if  __name__ == "__main__": # used for testing pretty much
+    args = process_arguments(sys.argv[1:])
+    acronym(args)
