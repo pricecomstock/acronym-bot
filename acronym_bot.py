@@ -31,7 +31,7 @@ def process_arguments(arglist):
 
     # Parse it
     args = parser.parse_args(arglist)
-
+    print(args)
     return args
 
 def acronym_is_acceptable(acronym):
@@ -45,6 +45,8 @@ def definition_is_acceptable(definition_words):
         joined_definition_words.replace(' ','').replace(',','',3).replace(';','',3).replace(':','',3).replace("'",'').isalnum()
     ])
 
+def stringify_acronym(acronym, definition):
+    return "*{}*: {}".format(acronym, definition)
 
 def add_acronym(acronym_dict, definition_words, manual_acronym=None):
     
@@ -53,7 +55,7 @@ def add_acronym(acronym_dict, definition_words, manual_acronym=None):
         
         if manual_acronym:
             if acronym_is_acceptable(manual_acronym):
-                acronym = manual_acronym
+                acronym = manual_acronym.upper()
         else:
             # assemble first letters
             for word in definition_words:
@@ -66,18 +68,47 @@ def add_acronym(acronym_dict, definition_words, manual_acronym=None):
         acronym_dict.setdefault(acronym, []) # Add acronym to the dictionary if it isn't already
         acronym_dict[acronym].append(definition) # Add definition to the acronym's entry
 
-        print(acronym_dict)
+        print("Added entry:\n{}".format(stringify_acronym(acronym, definition)))
 
-        # response += 'Added entry:\n' + bold(acronym) + ': ' + cmdarg
-        # responsetype='in_channel'
     else:
-        print("Invalid acronym") # Gotta send this back to slack somehow
+        return "Invalid acronym"
 
-def define_acronym(acronym):
-    pass
+def define_acronym(acronym_dict, acronym):
+    acronym = acronym.upper()
+    
+    if acronym in acronym_dict:
+        definition_list = acronym_dict[acronym]
+        num_definitions = len(definition_list)
+        if num_definitions == 1:
+            return stringify_acronym(acronym, definition_list[0])
+        
+        else:
+            response_string = "I have {ct} entries for {acr}:\n".format(ct=str(num_definitions), acr=acronym)
+            response_string += "\n".join(["_-{}_".format(definition) for definition in definition_list])
+            return response_string
+    
+    else:
+        return "I don't have any entries for {}".format(acronym)
 
-def find_acronym(query):
-    pass
+def find_acronym(acronym_dict, query):
+    query=" ".join(query).lower()
+    if len(query) >= 2:
+        response_text = "\n".join([stringify_acronym(acronym, str(acronym_dict[acronym])) # pass whole list as definition
+                        for acronym in sorted(acronym_dict)
+                        if query in acronym.lower()])
+        response_text += "\n--------------\n"
+        
+        # This one gets real complicated as a list comprehension
+        for acronym in sorted(acronym_dict):
+            for entry in acronym_dict[acronym]:
+                if query in entry.lower():
+                    response_text += stringify_acronym(acronym, entry) + "\n"
+        if response_text.strip().replace("-","") == '':
+            response_text = "I ain't found shit"
+    else:
+        response_text = "Please make search terms at least 2 characters."
+    
+    return response_text
 
 def process_acronym(args):
     # Load file information from config
@@ -94,14 +125,19 @@ def process_acronym(args):
 
     # If arguments exist, that's our command
     if args.add:
-        add_acronym(acronym_list_json, args.add, manual_acronym=args.manual)
+        manual = None
+        if args.manual:
+            manual = args.manual[0]
+        response_text = add_acronym(acronym_list_json, args.add, manual_acronym=manual)
     
     elif args.define:
-        define_acronym(acronym_list_json, args.define)
+        response_text = define_acronym(acronym_list_json, args.define[0])
     
     elif args.find:
-        find_acronym(acronym_list_json, args.find)
-        
+        response_text = find_acronym(acronym_list_json, args.find)
+    
+    print(response_text)
+
     with open(acronym_list_file_name,'w') as acronym_list_file:
         json.dump(acronym_list_json, acronym_list_file)
 
