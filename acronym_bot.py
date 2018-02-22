@@ -6,7 +6,7 @@ import sys
 
 def process_arguments(arglist):
 
-    parser = argparse.ArgumentParser(description="Add or list acronyms!")
+    parser = argparse.ArgumentParser(description="Add or list acronyms!", prog="Acronym Bot")
 
     # We can only do one operation at a time.
     command = parser.add_mutually_exclusive_group(required=True)
@@ -30,9 +30,14 @@ def process_arguments(arglist):
     help='use with --add. accepts a string with no spaces after this to manually designate an ACRONYM')
 
     # Parse it
-    args = parser.parse_args(arglist)
-    print(args)
-    return args
+    try:
+        args = parser.parse_args(arglist)
+    except:
+        # False indicates there was an issue and the second part is help
+        return False, parser.format_help()
+    # print(args)
+    # True indicates everything went ok and the second part is args
+    return True, args
 
 def acronym_is_acceptable(acronym):
     return acronym.isalnum()
@@ -68,7 +73,7 @@ def add_acronym(acronym_dict, definition_words, manual_acronym=None):
         acronym_dict.setdefault(acronym, []) # Add acronym to the dictionary if it isn't already
         acronym_dict[acronym].append(definition) # Add definition to the acronym's entry
 
-        print("Added entry:\n{}".format(stringify_acronym(acronym, definition)))
+        return "Added entry:\n{}".format(stringify_acronym(acronym, definition))
 
     else:
         return "Invalid acronym"
@@ -146,11 +151,21 @@ def process_acronym(args):
 # This is the interface for other programs to use.
 def process_command(command):
     # Parse Chat Command
-    args = process_arguments(command.split())
+    argparse_results = process_arguments(command.split())
     
-    # Send off to get executed
-    result = process_acronym(args)
-    return result
+    # successful argparse
+    if argparse_results[0]:
+        args = argparse_results[1]
+        # print(args)
+        # Send off to get executed
+        result = process_acronym(args)
+        print(result)
+        return result
+    
+    else:
+        # Return help
+        return argparse_results[1]
+    
 
 if  __name__ == "__main__": # used for testing pretty much
     print(process_command(" ".join(sys.argv[1:])))
