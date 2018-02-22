@@ -146,11 +146,11 @@ def process_acronym(args):
 # This is the interface for other programs to use.
 def process_command(command):
     # Parse Chat Command
-    args = process_arguments(command)
+    args = process_arguments(command.split())
     
     # Send off to get executed
-    process_acronym(args)
+    result = process_acronym(args)
+    return result
 
 if  __name__ == "__main__": # used for testing pretty much
-    args = process_arguments(sys.argv[1:])
-    process_acronym(args)
+    print(process_command(" ".join(sys.argv[1:])))
