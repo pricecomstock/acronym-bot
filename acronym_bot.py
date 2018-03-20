@@ -8,6 +8,8 @@ import sys
 ephemeral_response = True
 
 def process_arguments(arglist):
+    # This is a link to a lookup website full of acronyms
+    lookup_link = config.lookup_link
 
     parser = argparse.ArgumentParser(description="Add or list acronyms!", prog="Acronym Bot",
     # add_help=False,
@@ -84,11 +86,15 @@ def add_acronym(acronym_dict, definition_words, manual_acronym=None):
         
         # join and capitalize each word of the acronym
         definition = ' '.join(definition_words).title()
+        
+        if acronym in acronym_dict and definition in acronym_dict[acronym]:
+            return "That acronym and definition already exist together"
+        else:
+            acronym_dict.setdefault(acronym, []) # Add acronym to the dictionary if it isn't already
+            acronym_dict[acronym].append(definition) # Add definition to the acronym's entry
 
-        acronym_dict.setdefault(acronym, []) # Add acronym to the dictionary if it isn't already
-        acronym_dict[acronym].append(definition) # Add definition to the acronym's entry
-
-        return "Added entry:\n{}".format(stringify_acronym(acronym, definition))
+            ephemeral_response = False
+            return "Added entry:\n{}".format(stringify_acronym(acronym, definition))
 
     else:
         return "Invalid acronym"
@@ -99,6 +105,8 @@ def define_acronym(acronym_dict, acronym):
     if acronym in acronym_dict:
         definition_list = acronym_dict[acronym]
         num_definitions = len(definition_list)
+        ephemeral_response = False
+        
         if num_definitions == 1:
             return stringify_acronym(acronym, definition_list[0])
         
@@ -125,6 +133,8 @@ def find_acronym(acronym_dict, query):
                     response_text += stringify_acronym(acronym, entry) + "\n"
         if response_text.strip().replace("-","") == '':
             response_text = "I ain't found shit"
+        else:
+            ephemeral_response = False
     else:
         response_text = "Please make search terms at least 2 characters."
     
@@ -165,6 +175,8 @@ def process_acronym(args):
 
 # This is the interface for other programs to use.
 def process_command(command):
+    ephemeral_response = True # ephemeral by default
+    
     # Parse Chat Command
     argparse_results = process_arguments(command.split())
     
@@ -175,11 +187,11 @@ def process_command(command):
         # Send off to get executed
         result = process_acronym(args)
         print(result)
-        return result
+        return result, ephemeral_response
     
     else:
         # Return help
-        return argparse_results[1]
+        return argparse_results[1], True #help should be ephemeral
     
 
 if  __name__ == "__main__": # used for testing pretty much
