@@ -19,7 +19,8 @@ def process_arguments(arglist):
         "*MANUAL:* `/ab -a Phrase to Add -m P2A`",
         "*DEFINE:* `/ab -d ATD`",
         "*FIND:* `/ab -f query`",
-        ]))
+        ]),
+    epilog=lookup_link)
 
     # We can only do one operation at a time.
     command = parser.add_mutually_exclusive_group(required=True)
