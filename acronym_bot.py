@@ -72,7 +72,7 @@ def stringify_acronym(acronym, definition):
     return "*{}*: {}".format(acronym, definition)
 
 def add_acronym(acronym_dict, definition_words, manual_acronym=None):
-    
+    global ephemeral_response
     acronym=''
     if definition_is_acceptable(definition_words):
         
@@ -101,6 +101,7 @@ def add_acronym(acronym_dict, definition_words, manual_acronym=None):
         return "Invalid acronym"
 
 def define_acronym(acronym_dict, acronym):
+    global ephemeral_response
     acronym = acronym.upper()
     
     if acronym in acronym_dict:
@@ -120,6 +121,7 @@ def define_acronym(acronym_dict, acronym):
         return "I don't have any entries for {}".format(acronym)
 
 def find_acronym(acronym_dict, query):
+    global ephemeral_response
     query=" ".join(query).lower()
     if len(query) >= 2:
         response_text = "\n".join([stringify_acronym(acronym, str(acronym_dict[acronym])) # pass whole list as definition
@@ -176,6 +178,7 @@ def process_acronym(args):
 
 # This is the interface for other programs to use.
 def process_command(command):
+    global ephemeral_response
     ephemeral_response = True # ephemeral by default
     
     # Parse Chat Command
@@ -188,6 +191,7 @@ def process_command(command):
         # Send off to get executed
         result = process_acronym(args)
         print(result)
+        print(ephemeral_response)
         return result, ephemeral_response
     
     else:
