@@ -3,31 +3,46 @@ import json
 import acronym_config as config
 import sys
 
+# Global variable that will indicate whether ephemeral
+# I've thought about this and I think this is actually the least clunky way to do this
+ephemeral_response = True
 
 def process_arguments(arglist):
 
-    parser = argparse.ArgumentParser(description="Add or list acronyms!", prog="Acronym Bot")
+    parser = argparse.ArgumentParser(description="Add or list acronyms!", prog="Acronym Bot",
+    # add_help=False,
+    formatter_class=argparse.RawTextHelpFormatter,
+    usage='\n'.join([
+        "\n*ADD:* `/ab -a Phrase to Add`",
+        "*MANUAL:* `/ab -a Phrase to Add -m P2A`",
+        "*DEFINE:* `/ab -d ATD`",
+        "*FIND:* `/ab -f query`",
+        ]))
 
     # We can only do one operation at a time.
     command = parser.add_mutually_exclusive_group(required=True)
 
     # Add an acronym
     command.add_argument('-a', '--add', nargs='+',
-    help='accepts a string and automatically uses the first letter of each word to create an ACRONYM.')
+    help=argparse.SUPPRESS)
+    # help='accepts a string and automatically uses the first letter of each word to create an ACRONYM.')
     
     # Look up an acronym
     command.add_argument('-d', '--define', nargs=1,
-    help='accepts a string and returns all entries where the ACRONYM matches')
+    help=argparse.SUPPRESS)
+    # help='accepts a string and returns all entries where the ACRONYM matches')
     
     # Look up an acronym
     command.add_argument('-f', '--find', nargs='+',
-    help='accepts a string and returns all entries where either the ACRONYM or the DEFINITION match')
+    help=argparse.SUPPRESS)
+    # help='accepts a string and returns all entries where either the ACRONYM or the DEFINITION match')
 
 
     # NOT Mutually exclusive, but will be ignored if we aren't using --add
     # We can also manually define the letters for the acronym
     parser.add_argument('-m', '--manual', nargs=1,
-    help='use with --add. accepts a string with no spaces after this to manually designate an ACRONYM')
+    help=argparse.SUPPRESS)
+    # help='use with --add. accepts a string with no spaces after this to manually designate an ACRONYM')
 
     # Parse it
     try:
@@ -168,4 +183,4 @@ def process_command(command):
     
 
 if  __name__ == "__main__": # used for testing pretty much
-    print(process_command(" ".join(sys.argv[1:])))
+    process_command(" ".join(sys.argv[1:]))
